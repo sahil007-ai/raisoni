@@ -281,8 +281,48 @@ const closeVerifyModal = () => {
     verificationProof = { type: null, value: null };
 };
 
-/* ── Execute Verification (with simulated AI check) ── */
-const executeVerification = () => {
+/* ── Ollama Verification ── */
+const checkProofWithOllama = async (taskName, proofType, proofValue, reflection) => {
+    if (!reflection || reflection.length < 5) return null;
+
+    try {
+        const prompt = `You are a strict but encouraging study coach AI. 
+The student just completed a task: "${taskName}".
+They provided a ${proofType} proof of work: "${proofValue}".
+Here is their personal reflection on what they learned:
+"${reflection}"
+
+Analyze their reflection. Does it sound genuine? Does it relate to the task?
+Return exactly a JSON object, no markdown wrappers (no \`\`\`json), with:
+{
+  "valid": true | false,
+  "bonusXP": <integer between 0 and 50 based on quality>,
+  "aiMessage": "Short feedback message in 1 sentence for the student."
+}`;
+
+        const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'qwen2.5:7b',
+                prompt: prompt,
+                stream: false,
+                format: 'json'
+            })
+        });
+
+        if (!response.ok) throw new Error('Ollama error');
+
+        const data = await response.json();
+        return JSON.parse(data.response);
+    } catch (e) {
+        console.error('Ollama verification fallback active:', e);
+        return null;
+    }
+};
+
+/* ── Execute Verification (with Ollama Local Model) ── */
+const executeVerification = async () => {
     if (!verificationProof.type || !verifyingTaskId) return;
 
     const content = document.getElementById('verify-content');
@@ -292,30 +332,49 @@ const executeVerification = () => {
     content.style.display = 'none';
     loading.style.display = 'flex';
 
-    setTimeout(() => {
-        loading.style.display = 'none';
-        success.style.display = 'flex';
+    let tasks = getData(KEYS.TASKS, []);
+    const task = tasks.find(t => t.id === verifyingTaskId);
+    const taskName = task ? task.name : 'Unknown Task';
 
-        let xpAmount = verificationProof.type === 'media' ? 150 : 100;
+    const reflectionEl = document.getElementById('verify-reflection');
+    const reflectionText = reflectionEl ? reflectionEl.value.trim() : '';
 
-        const reflectionEl = document.getElementById('verify-reflection');
-        const reflectionText = reflectionEl ? reflectionEl.value.trim() : '';
-        let hasReflection = false;
+    let baseXP = verificationProof.type === 'media' ? 150 : 100;
+    let finalXP = baseXP;
+    let hasReflection = false;
 
+    // Call Ollama
+    const oResult = await checkProofWithOllama(taskName, verificationProof.type, verificationProof.value, reflectionText);
+
+    loading.style.display = 'none';
+    success.style.display = 'flex';
+
+    if (oResult) {
+        if (!oResult.valid) {
+            showToast('AI Coach: ' + oResult.aiMessage, 'warning');
+            finalXP = baseXP; // No bonus for poor reflection
+        } else {
+            finalXP = baseXP + (oResult.bonusXP || 20);
+            hasReflection = true;
+            verificationProof.reflection = reflectionText;
+            showToast('AI Coach: ' + (oResult.aiMessage || 'Great work!'), 'info');
+        }
+    } else {
+        // Fallback to simple simulated behavior
         if (reflectionText.length > 5) {
-            xpAmount += 20;
+            finalXP += 20;
             verificationProof.reflection = reflectionText;
             hasReflection = true;
         }
+    }
 
-        const xpEl = document.getElementById('verify-xp-earned');
-        if (xpEl) xpEl.textContent = `+${xpAmount} XP`;
+    const xpEl = document.getElementById('verify-xp-earned');
+    if (xpEl) xpEl.textContent = `+${finalXP} XP`;
 
-        setTimeout(() => {
-            markTaskVerified(verifyingTaskId, verificationProof, xpAmount, hasReflection);
-            closeVerifyModal();
-        }, 800);
-    }, 1200);
+    setTimeout(() => {
+        markTaskVerified(verifyingTaskId, verificationProof, finalXP, hasReflection);
+        closeVerifyModal();
+    }, 1500);
 };
 
 /* ── Mark Task as Verified and Complete ── */

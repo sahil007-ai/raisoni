@@ -88,6 +88,58 @@ const getAbsenceSeverity = (hoursAway) => {
 /* ── Pick a random message from a severity pool ── */
 const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+/* ── Generate Message with Local Ollama Model ── */
+const getOllamaMessage = async (severity, hoursAway, isSplash) => {
+    // Collect user context to make the guilt trip personal
+    const streak = getData(KEYS.STREAK, 0);
+    const pendingTasks = getData(KEYS.TASKS, []).filter(t => !t.completed).length;
+    
+    let persona = "a gentle, encouraging study buddy.";
+    if (severity === 'moderate') persona = "a slightly passive-aggressive study coach.";
+    if (severity === 'aggressive') persona = "a highly sarcastic, sassy, and disappointed Duolingo-style owl.";
+    if (severity === 'nuclear') persona = "an absolutely unhinged, dramatic, and devastated app mourning a lost student.";
+
+    const prompt = `You are Plan4U, the student's study planner app. Your persona right now is: ${persona}
+    
+The student has been ignoring you for ${hoursAway.toFixed(1)} hours.
+They currently have a study streak of ${streak} days, and ${pendingTasks} pending tasks left to do.
+
+Generate a short, punchy guilt-trip message to get them to come back and study. Keep it under 2 sentences.
+If the message is for a splash screen, include a funny button text (less than 4 words) they have to click to agree to study.
+
+Respond EXACTLY in this JSON format with no markdown wrappers (no \`\`\`json):
+{
+  "title": "Short catchy title",
+  "body": "The actual message text",
+  "emoji": "🙄",
+  "cta": "Button text (if splash)"
+}`;
+
+    try {
+        const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'qwen2.5:7b',
+                prompt: prompt,
+                stream: false,
+                format: 'json'
+            })
+        });
+
+        if (!response.ok) throw new Error('Ollama connection failed');
+
+        const data = await response.json();
+        const jsonStr = data.response;
+        return JSON.parse(jsonStr);
+    } catch (err) {
+        console.warn('Ollama offline, falling back to static messages:', err);
+        // Fallback to static lists
+        const pool = isSplash ? COMEBACK_MESSAGES[severity] : GUILT_MESSAGES[severity];
+        return pickRandom(pool || COMEBACK_MESSAGES.gentle);
+    }
+};
+
 /* ── Request Notification Permission ── */
 const requestNotifPermission = async () => {
     if (!('Notification' in window)) return false;
@@ -106,13 +158,13 @@ const scheduleNotification = (delayMs, severity) => {
     const existingId = localStorage.getItem(NOTIF_KEYS.NOTIF_SCHEDULED);
     if (existingId) clearTimeout(parseInt(existingId));
 
-    const timeoutId = setTimeout(() => {
-        const pool = GUILT_MESSAGES[severity] || GUILT_MESSAGES.gentle;
-        const msg = pickRandom(pool);
+    const timeoutId = setTimeout(async () => {
+        const hoursAway = delayMs / (1000 * 60 * 60);
+        const msg = await getOllamaMessage(severity, hoursAway, false);
 
         try {
             const n = new Notification(msg.title, {
-                body: msg.body,
+                body: msg.body || msg.subtitle, // handle fallback differences
                 icon: '📚',
                 badge: '📚',
                 tag: 'plan4u-guilt',
@@ -144,7 +196,7 @@ const scheduleNotification = (delayMs, severity) => {
 };
 
 /* ── Show In-App Comeback Splash ── */
-const showComebackSplash = (hoursAway) => {
+const showComebackSplash = async (hoursAway) => {
     const today = getToday();
     const alreadyShown = localStorage.getItem(NOTIF_KEYS.COMEBACK_SHOWN);
     if (alreadyShown === today) return; // Only show once per day
@@ -152,8 +204,7 @@ const showComebackSplash = (hoursAway) => {
     if (hoursAway < 1) return; // Don't show if they just left
 
     const severity = getAbsenceSeverity(hoursAway);
-    const pool = COMEBACK_MESSAGES[severity] || COMEBACK_MESSAGES.gentle;
-    const msg = pickRandom(pool);
+    const msg = await getOllamaMessage(severity, hoursAway, true);
 
     // Create splash overlay
     const overlay = document.createElement('div');
@@ -161,24 +212,24 @@ const showComebackSplash = (hoursAway) => {
     overlay.innerHTML = `
         <div class="comeback-backdrop"></div>
         <div class="comeback-card">
-            <div class="comeback-emoji">${msg.emoji}</div>
-            <h2 class="comeback-title">${msg.title}</h2>
-            <p class="comeback-subtitle">${msg.subtitle}</p>
+            <div class="comeback-emoji">\${msg.emoji || '📚'}</div>
+            <h2 class="comeback-title">\${msg.title}</h2>
+            <p class="comeback-subtitle">\${msg.body || msg.subtitle}</p>
             <div class="comeback-stats">
                 <div class="comeback-stat">
-                    <span class="comeback-stat-value">${Math.floor(hoursAway)}h</span>
+                    <span class="comeback-stat-value">\${Math.floor(hoursAway)}h</span>
                     <span class="comeback-stat-label">Away</span>
                 </div>
                 <div class="comeback-stat">
-                    <span class="comeback-stat-value" id="comeback-streak">${getData(KEYS.STREAK, 0)}</span>
+                    <span class="comeback-stat-value" id="comeback-streak">\${getData(KEYS.STREAK, 0)}</span>
                     <span class="comeback-stat-label">Streak</span>
                 </div>
                 <div class="comeback-stat">
-                    <span class="comeback-stat-value" id="comeback-tasks">${getData(KEYS.TASKS, []).filter(t => !t.completed).length}</span>
+                    <span class="comeback-stat-value" id="comeback-tasks">\${getData(KEYS.TASKS, []).filter(t => !t.completed).length}</span>
                     <span class="comeback-stat-label">Pending</span>
                 </div>
             </div>
-            <button class="comeback-cta" id="comeback-cta-btn">${msg.cta}</button>
+            <button class="comeback-cta" id="comeback-cta-btn">\${msg.cta || "Let's Study"}</button>
             <button class="comeback-dismiss" id="comeback-dismiss-btn">Maybe later...</button>
         </div>
     `;
@@ -211,7 +262,7 @@ const showComebackSplash = (hoursAway) => {
             "Fine. But I'll be back. 😤",
             "Your textbook just shed a tear. 📖💧",
             "Okay... but your exam won't wait for you.",
-            `That's ${dismissCount} time${dismissCount > 1 ? 's' : ''} you've dismissed me. I'm counting.`,
+            `That's \${dismissCount} time\${dismissCount > 1 ? 's' : ''} you've dismissed me. I'm counting.`,
             "I'll remember this when your grades come out. 📉"
         ];
         showToast(pickRandom(dismissResponses), 'warning');

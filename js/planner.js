@@ -201,8 +201,74 @@ const handleSyllabusFile = async (file) => {
     }
 };
 
-/* ── Start AI Analysis (Simulated) ── */
-const startAnalysis = () => {
+/* ── Start AI Analysis (with Ollama Local Model) ── */
+const analyzeWithOllama = async (text) => {
+    try {
+        const prompt = `You are an AI syllabus parser. Given the following syllabus or course notes text, extract the course name, exam date, and a list of specific academic study topics.
+Return EXACTLY a JSON object without any markdown wrapping (no \`\`\`json), in this format:
+{
+  "courseName": "string",
+  "examDate": "YYYY-MM-DD" (or null if unknown),
+  "topics": [
+    {
+      "name": "string",
+      "unit": "string",
+      "difficulty": "Easy" | "Medium" | "Hard"
+    }
+  ]
+}
+
+Syllabus Text:
+---
+${text}
+---`;
+
+        const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'qwen2.5:7b',
+                prompt: prompt,
+                stream: false,
+                format: 'json'
+            })
+        });
+
+        if (!response.ok) throw new Error('Ollama connection failed');
+
+        const data = await response.json();
+        const jsonStr = data.response;
+        const result = JSON.parse(jsonStr);
+        
+        const topics = (result.topics || []).map(t => {
+            const diff = (t.difficulty === 'Easy' || t.difficulty === 'Medium' || t.difficulty === 'Hard') ? t.difficulty : 'Medium';
+            return {
+                id: generateId(),
+                name: t.name || 'Untitled Topic',
+                unit: t.unit || 'General',
+                difficulty: diff,
+                estimatedHours: DIFFICULTY_HOURS[diff] || 1.5,
+                completed: false
+            };
+        });
+
+        return {
+            courseId: generateId(),
+            courseName: result.courseName || 'Untitled Course',
+            examDate: result.examDate || '',
+            topics: topics,
+            confidence: 95, 
+            uploadedAt: new Date().toISOString(),
+            color: PLANNER_COLORS[parsedCourses.length % PLANNER_COLORS.length]
+        };
+
+    } catch (err) {
+        console.error('Ollama API error:', err);
+        return null;
+    }
+};
+
+const startAnalysis = async () => {
     const text = document.getElementById('syllabus-text')?.value.trim();
     const fileIndicator = document.getElementById('file-indicator');
     const hasFile = fileIndicator && fileIndicator.style.display !== 'none';
@@ -216,11 +282,21 @@ const startAnalysis = () => {
     goToStep(2);
     showAnalysisLoading();
 
-    // Parse after simulated delay
-    setTimeout(() => {
-        currentParsed = parseSyllabus(text || '');
+    try {
+        let parsed = await analyzeWithOllama(text || '');
+        if (!parsed) {
+            showToast('Ollama offline or failed. Falling back to local heuristic parsing.', 'warning');
+            parsed = parseSyllabus(text || '');
+        } else {
+            showToast('AI Analysis complete using Qwen2.5! ✨', 'success');
+        }
+        currentParsed = parsed;
         renderParsedResult();
-    }, 2500);
+    } catch (err) {
+        console.error(err);
+        showToast('Error parsing syllabus', 'error');
+        goToStep(1);
+    }
 };
 
 /* ══════════════════════════════════════════════
