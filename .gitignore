@@ -1,0 +1,8 @@
+node_modules/
+db/plan4u.db
+db/plan4u.db-wal
+db/plan4u.db-shm
+.env
+*.log
+.DS_Store
+Thumbs.db

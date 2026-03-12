@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Plan4U Dashboard — Track your progress, view stats, and manage your study journey.">
+    <title>Dashboard — Plan4U</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Level Up Overlay -->
+    <div id="levelup-overlay" class="levelup-overlay">
+        <div class="levelup-card">
+            <span class="levelup-emoji">🎉</span>
+            <h2 class="levelup-title">Level Up!</h2>
+            <p class="levelup-subtitle">You're now a Scholar!</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h1>📚 Plan4U</h1>
+            <span>AI Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" data-page="dashboard.html">
+                <span class="nav-icon">🏠</span> Dashboard
+            </div>
+            <div class="nav-item" data-page="planner.html">
+                <span class="nav-icon">📅</span> Study Planner
+            </div>
+            <div class="nav-item" data-page="tasks.html">
+                <span class="nav-icon">✅</span> Tasks
+            </div>
+            <div class="nav-item" data-page="analytics.html">
+                <span class="nav-icon">📊</span> Analytics
+            </div>
+        </nav>
+        <div id="sidebar-pomodoro" class="sidebar-pomodoro"></div>
+        <div class="sidebar-footer">Plan4U v1.0 · 2026</div>
+    </aside>
+
+    <!-- Header -->
+    <header class="header">
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle">☰</button>
+        <h2 class="header-title" id="header-title">Good morning, Scholar! 🌤️</h2>
+        <div class="header-xp">
+            <div class="xp-bar-container">
+                <div class="xp-bar-fill" id="xp-bar-fill" style="width: 0%"></div>
+            </div>
+            <span class="xp-label" id="xp-label">0 / 200 XP</span>
+        </div>
+        <div class="header-right">
+            <span class="streak-badge" id="streak-badge">🔥 0 days</span>
+            <span class="level-badge" id="level-badge">Lv.1 Beginner</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="dashboard-page">
+
+        <!-- Row 1: Stats Cards -->
+        <div class="grid-4 mb-md">
+            <div class="stat-card fade-in-up">
+                <div class="stat-icon blue">📚</div>
+                <div class="stat-info">
+                    <h3 id="stat-study-goal">0/5 hrs</h3>
+                    <p>Today's Study Goal</p>
+                </div>
+            </div>
+            <div class="stat-card fade-in-up">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-info">
+                    <h3 id="stat-tasks-today">0/0</h3>
+                    <p>Tasks Done Today</p>
+                </div>
+            </div>
+            <div class="stat-card fade-in-up">
+                <div class="stat-icon yellow">🔥</div>
+                <div class="stat-info">
+                    <h3 id="stat-streak">0 days</h3>
+                    <p>Current Streak</p>
+                </div>
+            </div>
+            <div class="stat-card fade-in-up">
+                <div class="stat-icon purple">⭐</div>
+                <div class="stat-info">
+                    <h3 id="stat-xp">0 XP</h3>
+                    <p>Total XP</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Schedule + Gamification -->
+        <div class="grid-2 mb-md">
+            <!-- Today's Schedule -->
+            <div class="card fade-in-up">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Today's Schedule</h3>
+                </div>
+                <div id="dashboard-schedule">
+                    <div class="empty-state" style="padding:24px;">
+                        <span class="empty-state-icon">📅</span>
+                        <p class="text-muted">No schedule yet — go to Planner to generate one!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gamification Panel -->
+            <div class="card fade-in-up">
+                <div class="card-header">
+                    <h3 class="card-title">🏆 Achievements</h3>
+                </div>
+
+                <!-- Level Card -->
+                <div
+                    style="background:linear-gradient(135deg,#EBF2FF,#F3F0FF);border-radius:12px;padding:18px;margin-bottom:18px;">
+                    <div class="flex-between mb-sm">
+                        <span style="font-weight:700;" id="dash-level-label">Level 1 — Beginner</span>
+                        <span class="pill pill-purple" id="dash-level-xp">0 XP</span>
+                    </div>
+                    <div class="xp-bar-container" style="height:8px;">
+                        <div class="xp-bar-fill" id="dash-xp-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Badges Grid -->
+                <p style="font-size:0.82rem;font-weight:600;margin-bottom:10px;">Badges</p>
+                <div id="dashboard-badges" class="badge-grid"></div>
+
+                <!-- Next Badge -->
+                <div
+                    style="margin-top:14px;padding:10px;background:var(--bg-primary);border-radius:10px;font-size:0.82rem;">
+                    <span style="font-weight:600;">Next badge:</span>
+                    <span id="next-badge-label" class="text-muted">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Motivational Message -->
+        <div class="motivation-card fade-in-up mb-md">
+            <span class="card-icon">🤖</span>
+            <p id="motivation-text">Loading motivation...</p>
+            <button class="btn btn-sm btn-secondary" id="refresh-motivation-btn">Refresh Message 🔄</button>
+        </div>
+
+        <!-- Row 4: Quick Actions -->
+        <div class="card fade-in-up">
+            <div class="card-header">
+                <h3 class="card-title">⚡ Quick Actions</h3>
+            </div>
+            <div class="quick-actions">
+                <a href="tasks.html" class="btn btn-primary">+ Add Task</a>
+                <a href="planner.html" class="btn btn-secondary">📅 Generate Schedule</a>
+                <a href="analytics.html" class="btn btn-secondary">▶️ Start Pomodoro</a>
+                <a href="analytics.html" class="btn btn-secondary">📊 View Analytics</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Tab Bar (Mobile) -->
+    <nav class="bottom-tab-bar">
+        <a href="dashboard.html" class="tab-item active"><span class="tab-icon">🏠</span>Home</a>
+        <a href="planner.html" class="tab-item"><span class="tab-icon">📅</span>Planner</a>
+        <a href="tasks.html" class="tab-item"><span class="tab-icon">✅</span>Tasks</a>
+        <a href="analytics.html" class="tab-item"><span class="tab-icon">📊</span>Analytics</a>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="js/confetti.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/gamification.js"></script>
+    <script src="js/notifications.js"></script>
+    <script>
+        /**
+         * Dashboard-specific initialization:
+         * Renders stats, schedule, badges, and motivational messages.
+         */
+
+        const MOTIVATIONAL_QUOTES = [
+            "You're making great progress — keep the momentum going! 🚀",
+            "Consistency beats intensity. Show up every day and you'll win! 💪",
+            "3 days streak! You're building a real habit. 🔥",
+            "Every study session brings you closer to your goals. 📚",
+            "Exam prep is a marathon, not a sprint. Pace yourself! 🏃",
+            "You're doing better than you think. Trust the process! ✨",
+            "Focus on progress, not perfection. You've got this! 🌟",
+            "The best time to study was yesterday. The second best is NOW! ⏰",
+            "Smart students don't study harder — they study smarter! 🧠",
+            "Your future self will thank you for the work you put in today! 🎯"
+        ];
+
+        const initDashboard = () => {
+            renderDashboardStats();
+            renderDashboardSchedule();
+            renderBadges('dashboard-badges');
+            renderMotivation();
+            renderDashboardLevel();
+            renderNextBadge();
+
+            // Refresh motivation button
+            const btn = document.getElementById('refresh-motivation-btn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    btn.querySelector('span')?.classList?.add('spin');
+                    renderMotivation();
+                    setTimeout(() => btn.querySelector('span')?.classList?.remove('spin'), 600);
+                });
+            }
+        };
+
+        // Dashboard stat cards
+        const renderDashboardStats = () => {
+            const tasks = getData(KEYS.TASKS, []);
+            const today = getToday();
+            const sessions = getData(KEYS.SESSIONS, []);
+            const streak = getData(KEYS.STREAK, 0);
+            const xp = getData(KEYS.XP, 0);
+
+            // Calculate today's study hours from pomodoro sessions
+            const todayMinutes = sessions
+                .filter(s => s.date === today && s.type === 'focus')
+                .reduce((sum, s) => sum + (s.duration || 25), 0);
+            const todayHours = (todayMinutes / 60).toFixed(1);
+
+            // Tasks done today
+            const todayDone = tasks.filter(t => t.completed && t.completedAt && t.completedAt.startsWith(today)).length;
+            const todayTotal = tasks.filter(t => t.dueDate === today || (t.completed && t.completedAt && t.completedAt.startsWith(today))).length;
+
+            document.getElementById('stat-study-goal').textContent = `${todayHours}/5 hrs`;
+            document.getElementById('stat-tasks-today').textContent = `${todayDone}/${todayTotal || 0}`;
+            document.getElementById('stat-streak').textContent = `${streak} days`;
+            document.getElementById('stat-xp').textContent = `${xp.toLocaleString()} XP`;
+        };
+
+        // Today's schedule from planner data
+        const renderDashboardSchedule = () => {
+            const container = document.getElementById('dashboard-schedule');
+            const schedule = getData(KEYS.SCHEDULE, []);
+            const today = getToday();
+            const todaySchedule = schedule.find(d => d.date === today);
+
+            if (!todaySchedule || todaySchedule.slots.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding:24px;">
+                        <span class="empty-state-icon">📅</span>
+                        <p class="text-muted">No schedule for today — <a href="planner.html" style="color:var(--accent-blue)">generate one!</a></p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = todaySchedule.slots.map(slot => `
+                <div class="timeline-item">
+                    <span class="timeline-dot" style="background:${slot.subjectColor}"></span>
+                    <span class="timeline-time">${slot.startTime}</span>
+                    <div class="timeline-content">
+                        <h4>${slot.subjectName}</h4>
+                        <p>${slot.duration} min</p>
+                    </div>
+                    ${slot.completed ? '<span class="pill pill-green">✓</span>' : ''}
+                </div>
+            `).join('');
+        };
+
+        // Motivation message
+        const renderMotivation = () => {
+            const el = document.getElementById('motivation-text');
+            if (!el) return;
+
+            // Mix dynamic context with quotes
+            const streak = getData(KEYS.STREAK, 0);
+            const xp = getData(KEYS.XP, 0);
+            const level = getData(KEYS.LEVEL, 1);
+            const info = getLevelInfo(level);
+            const nextXP = getLevelThreshold(level + 1);
+            const percent = Math.round((xp / nextXP) * 100);
+
+            const dynamic = [
+                `You're ${percent}% to Level ${level + 1} — keep going! 🎯`,
+                streak >= 3 ? `${streak} days streak! You're building a real habit. 🔥` : null,
+                `As a ${info.name}, you have ${xp} XP. Level up to unlock more! ⭐`,
+            ].filter(Boolean);
+
+            const allQuotes = [...MOTIVATIONAL_QUOTES, ...dynamic];
+            el.textContent = allQuotes[Math.floor(Math.random() * allQuotes.length)];
+        };
+
+        // Dashboard level bar
+        const renderDashboardLevel = () => {
+            const xp = getData(KEYS.XP, 0);
+            const level = getData(KEYS.LEVEL, 1);
+            const info = getLevelInfo(level);
+            const prevThreshold = getLevelThreshold(level);
+            const nextThreshold = getLevelThreshold(level + 1);
+            const percent = Math.min(((xp - prevThreshold) / (nextThreshold - prevThreshold)) * 100, 100);
+
+            const label = document.getElementById('dash-level-label');
+            const xpEl = document.getElementById('dash-level-xp');
+            const fill = document.getElementById('dash-xp-fill');
+
+            if (label) label.textContent = `Level ${level} — ${info.name}`;
+            if (xpEl) xpEl.textContent = `${xp} XP`;
+            if (fill) fill.style.width = `${percent}%`;
+        };
+
+        // Next badge indicator
+        const renderNextBadge = () => {
+            const el = document.getElementById('next-badge-label');
+            if (!el) return;
+            const next = getNextBadgeProgress();
+            el.textContent = `${next.name} — ${next.description || 'Keep going!'}`;
+        };
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+    <script src="js/timer-widget.js"></script>
+</body>
+
+</html>

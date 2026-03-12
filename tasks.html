@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Plan4U Task Manager — Manage your study tasks with priorities, deadlines, and gamification.">
+    <title>Tasks — Plan4U</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        /* Verification Modal Specific Styles */
+        .verify-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .verify-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all var(--transition);
+            text-align: center;
+        }
+
+        .verify-tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .url-preview-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--accent-blue);
+            background: #F0F6FF;
+            border-radius: var(--radius);
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            background: #E0EDFF;
+            border-color: #3B7DEB;
+        }
+
+        .drop-zone-icon {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .drop-zone-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .drop-zone-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .file-preview-card {
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            margin-top: 12px;
+        }
+
+        .verify-loading {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 48px;
+            text-align: center;
+        }
+
+        .verify-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .verify-success {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 48px;
+            text-align: center;
+        }
+
+        .verify-checkmark {
+            font-size: 3.5rem;
+            animation: levelUpBounce 0.5s ease;
+        }
+
+        .skip-confirm {
+            margin-top: 16px;
+            padding: 16px;
+            background: #FEF9EE;
+            border: 1px solid #FBBF24;
+            border-radius: var(--radius-sm);
+        }
+
+        .skip-confirm p {
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            color: #92400E;
+        }
+
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .skip-link {
+            display: block;
+            text-align: center;
+            margin-top: 14px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color var(--transition);
+        }
+
+        .skip-link:hover {
+            color: var(--accent-red);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Level Up Overlay -->
+    <div id="levelup-overlay" class="levelup-overlay">
+        <div class="levelup-card">
+            <span class="levelup-emoji">🎉</span>
+            <h2 class="levelup-title">Level Up!</h2>
+            <p class="levelup-subtitle">You're now a Scholar!</p>
+        </div>
+    </div>
+
+    <!-- ═══ ADD TASK MODAL ═══ -->
+    <div id="task-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">📝 Add New Task</h3>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Task Name *</label>
+                <input type="text" class="form-input" id="task-name" placeholder="e.g., Review Chapter 5">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Subject</label>
+                <select class="form-select" id="task-subject">
+                    <option value="">Select Subject</option>
+                </select>
+            </div>
+            <div class="grid-2" style="gap:12px;">
+                <div class="form-group">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" class="form-input" id="task-due-date">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select class="form-select" id="task-priority">
+                        <option value="Low">🟢 Low</option>
+                        <option value="Medium" selected>🟡 Medium</option>
+                        <option value="High">🔴 High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <textarea class="form-textarea" id="task-notes" placeholder="Add any notes..."></textarea>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:8px;">
+                <button class="btn btn-primary btn-full" id="save-task-btn">Save Task</button>
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ VERIFICATION MODAL ═══ -->
+    <div id="verify-modal-overlay" class="modal-overlay">
+        <div class="modal" style="max-width:480px;">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title">Verify Task Completion 🔍</h3>
+                    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Prove your work to earn XP!</p>
+                </div>
+                <button class="modal-close verify-modal-close">✕</button>
+            </div>
+
+            <!-- Main Content (hidden during loading/success) -->
+            <div id="verify-content">
+                <!-- Tabs -->
+                <div class="verify-tabs">
+                    <button class="verify-tab active" data-tab="url">🔗 URL Proof</button>
+                    <button class="verify-tab" data-tab="media">📎 Media Upload</button>
+                </div>
+
+                <!-- URL Proof Panel -->
+                <div id="verify-url-panel">
+                    <label class="form-label">Paste a link to your work (notes doc, assignment, submission)</label>
+                    <input type="url" class="form-input" id="verify-url-input" placeholder="https://...">
+                    <div id="url-status" style="margin-top:6px;font-size:0.8rem;"></div>
+                    <div id="url-preview" class="url-preview-card" style="display:none;"></div>
+                </div>
+
+                <!-- Media Upload Panel -->
+                <div id="verify-media-panel" style="display:none;">
+                    <label class="form-label">Upload proof (photo of notes, screenshot, document)</label>
+                    <div class="drop-zone" id="verify-drop-zone">
+                        <span class="drop-zone-icon">📁</span>
+                        <div class="drop-zone-text">Drag & drop or click to upload</div>
+                        <div class="drop-zone-sub">Images, PDF, DOC, DOCX — Max 10MB</div>
+                    </div>
+                    <input type="file" id="verify-file-input" accept="image/*,.pdf,.doc,.docx" style="display:none;">
+                    <div id="file-preview" style="display:none;"></div>
+                </div>
+
+                <!-- Reflection Notes (Optional) -->
+                <div style="margin-top:20px; text-align:left;">
+                    <label class="form-label">Reflection Notes (Optional, +20 XP)</label>
+                    <textarea class="form-textarea" id="verify-reflection"
+                        placeholder="What did you learn? Summarize your work here..."
+                        style="min-height: 60px;"></textarea>
+                </div>
+
+                <!-- Verify Button -->
+                <button class="btn btn-primary btn-full btn-disabled" id="verify-complete-btn" disabled
+                    style="margin-top:16px;">
+                    Upload proof to verify ✓
+                </button>
+
+                <!-- Skip Link -->
+                <span class="skip-link" id="skip-verification-link">Skip Verification</span>
+
+                <!-- Skip Confirmation -->
+                <div id="skip-confirm" class="skip-confirm" style="display:none;">
+                    <p>⚠️ Skip verification? You'll earn <strong>25 XP</strong> instead of <strong>100-150 XP</strong>.
+                    </p>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-danger" id="skip-anyway-btn">Skip Anyway</button>
+                        <button class="btn btn-sm btn-secondary" id="go-back-btn">Go Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="verify-loading" class="verify-loading" style="display:none;">
+                <div class="verify-spinner"></div>
+                <p style="font-weight:600;font-size:0.95rem;">Verifying your proof...</p>
+                <p style="font-size:0.82rem;color:var(--text-muted);">AI is checking your submission</p>
+            </div>
+
+            <!-- Success State -->
+            <div id="verify-success" class="verify-success" style="display:none;">
+                <span class="verify-checkmark">✅</span>
+                <h3 style="font-size:1.1rem;">Verification Accepted!</h3>
+                <p id="verify-xp-earned" style="font-size:1.3rem;font-weight:800;color:var(--accent-green);">+100 XP</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h1>📚 Plan4U</h1>
+            <span>AI Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item" data-page="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</div>
+            <div class="nav-item" data-page="planner.html"><span class="nav-icon">📅</span> Study Planner</div>
+            <div class="nav-item active" data-page="tasks.html"><span class="nav-icon">✅</span> Tasks</div>
+            <div class="nav-item" data-page="analytics.html"><span class="nav-icon">📊</span> Analytics</div>
+        </nav>
+        <div id="sidebar-pomodoro" class="sidebar-pomodoro"></div>
+        <div class="sidebar-footer">Plan4U v1.0 · 2026</div>
+    </aside>
+
+    <!-- Header -->
+    <header class="header">
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle">☰</button>
+        <h2 class="header-title" id="header-title">Task Manager ✅</h2>
+        <div class="header-xp">
+            <div class="xp-bar-container">
+                <div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div>
+            </div>
+            <span class="xp-label" id="xp-label">0 / 200 XP</span>
+        </div>
+        <div class="header-right">
+            <span class="streak-badge" id="streak-badge">🔥 0 days</span>
+            <span class="level-badge" id="level-badge">Lv.1 Beginner</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="tasks-page">
+        <div class="flex-between mb-md" style="flex-wrap:wrap;gap:12px;">
+            <h2 class="section-title" style="margin-bottom:0;">📋 My Tasks</h2>
+            <button class="btn btn-primary" id="add-task-btn">+ Add New Task</button>
+        </div>
+        <div class="filter-bar">
+            <button class="filter-pill task-filter active" data-filter="all">All</button>
+            <button class="filter-pill task-filter" data-filter="today">Today</button>
+            <button class="filter-pill task-filter" data-filter="week">This Week</button>
+            <button class="filter-pill task-filter" data-filter="overdue">Overdue</button>
+            <button class="filter-pill task-filter" data-filter="completed">Completed</button>
+        </div>
+        <div id="task-list"></div>
+    </main>
+
+    <!-- Bottom Tab Bar (Mobile) -->
+    <nav class="bottom-tab-bar">
+        <a href="dashboard.html" class="tab-item"><span class="tab-icon">🏠</span>Home</a>
+        <a href="planner.html" class="tab-item"><span class="tab-icon">📅</span>Planner</a>
+        <a href="tasks.html" class="tab-item active"><span class="tab-icon">✅</span>Tasks</a>
+        <a href="analytics.html" class="tab-item"><span class="tab-icon">📊</span>Analytics</a>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="js/confetti.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/gamification.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/tasks.js"></script>
+    <script src="js/timer-widget.js"></script>
+</body>
+
+</html>
