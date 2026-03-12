@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="StudyQuest AI Study Planner — Upload your syllabus and let AI generate a smart study schedule.">
+    <title>Study Planner — StudyQuest</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        /* ── Loading Spinner ── */
+        .verify-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ── Stepper ── */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+            padding: 16px 0;
+        }
+
+        .stepper-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .stepper-step.active,
+        .stepper-step.done {
+            opacity: 1;
+        }
+
+        .stepper-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            background: var(--border);
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .stepper-step.active .stepper-circle {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .stepper-step.done .stepper-circle {
+            background: var(--accent-green);
+            color: #fff;
+        }
+
+        .stepper-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .stepper-connector {
+            width: 50px;
+            height: 2px;
+            background: var(--border);
+        }
+
+        /* ── Syllabus Drop Zone ── */
+        .syllabus-drop-zone {
+            border: 2px dashed var(--accent-blue);
+            background: #F0F6FF;
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .syllabus-drop-zone:hover,
+        .syllabus-drop-zone.drag-over {
+            background: #E0EDFF;
+            border-color: #3B7DEB;
+        }
+
+        .syllabus-drop-zone .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .syllabus-drop-zone .title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .syllabus-drop-zone .sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .or-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .or-divider hr {
+            flex: 1;
+            border: none;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .or-divider span {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        #syllabus-text {
+            width: 100%;
+            min-height: 200px;
+            resize: vertical;
+            padding: 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            transition: border-color 0.25s;
+        }
+
+        #syllabus-text:focus {
+            border-color: var(--accent-blue);
+            outline: none;
+        }
+
+        .file-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--accent-green);
+            margin-top: 12px;
+        }
+
+        /* ── Topic Pill Rows ── */
+        .topic-pill-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+        }
+
+        .topic-pill-row:last-child {
+            border-bottom: none;
+        }
+
+        .topic-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .topic-unit {
+            font-size: 0.72rem;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .difficulty-toggle {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .diff-easy {
+            background: #ECFDF5;
+            color: #059669;
+        }
+
+        .diff-medium {
+            background: #FEF9EE;
+            color: #D97706;
+        }
+
+        .diff-hard {
+            background: #FEF2F2;
+            color: #DC2626;
+        }
+
+        .topic-hours-input {
+            width: 50px;
+            padding: 3px 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            text-align: center;
+        }
+
+        .intensity-pills {
+            display: flex;
+            gap: 4px;
+        }
+
+        /* ── Schedule Blocks ── */
+        .day-section {
+            margin-bottom: 20px;
+        }
+
+        .day-section.today {
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 12px;
+        }
+
+        .day-label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .schedule-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            transition: all 0.25s;
+            background: var(--bg-card);
+        }
+
+        .schedule-block:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .schedule-block.completed {
+            opacity: 0.6;
+            background: var(--bg-primary);
+        }
+
+        .schedule-block.skipped {
+            opacity: 0.4;
+        }
+
+        /* ── Smart Warnings ── */
+        .smart-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .warning-critical {
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+        }
+
+        .warning-caution {
+            background: #FEF9EE;
+            border: 1px solid #FCD34D;
+        }
+
+        /* ── Course List ── */
+        .course-pill {
+            transition: all 0.2s;
+        }
+
+        .course-pill:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Level Up Overlay -->
+    <div id="levelup-overlay" class="levelup-overlay">
+        <div class="levelup-card">
+            <span class="levelup-emoji">🎉</span>
+            <h2 class="levelup-title">Level Up!</h2>
+            <p class="levelup-subtitle">You're now a Scholar!</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h1>📚 StudyQuest</h1>
+            <span>AI Study Planner</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item" data-page="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</div>
+            <div class="nav-item active" data-page="planner.html"><span class="nav-icon">📅</span> Study Planner</div>
+            <div class="nav-item" data-page="tasks.html"><span class="nav-icon">✅</span> Tasks</div>
+            <div class="nav-item" data-page="analytics.html"><span class="nav-icon">📊</span> Analytics</div>
+        </nav>
+        <div id="sidebar-pomodoro" class="sidebar-pomodoro"></div>
+
+        <!-- Saved Courses -->
+        <div style="padding:16px 20px;">
+            <p style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:8px;">📚 MY COURSES</p>
+            <div id="course-list"></div>
+        </div>
+
+        <div class="sidebar-footer">StudyQuest v1.0 · 2026</div>
+    </aside>
+
+    <!-- Header -->
+    <header class="header">
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle">☰</button>
+        <h2 class="header-title" id="header-title">AI Study Planner 🤖</h2>
+        <div class="header-xp">
+            <div class="xp-bar-container">
+                <div class="xp-bar-fill" id="xp-bar-fill" style="width: 0%"></div>
+            </div>
+            <span class="xp-label" id="xp-label">0 / 200 XP</span>
+        </div>
+        <div class="header-right">
+            <span class="streak-badge" id="streak-badge">🔥 0 days</span>
+            <span class="level-badge" id="level-badge">Lv.1 Beginner</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="planner-page">
+
+        <!-- Stepper Progress Bar -->
+        <div class="stepper">
+            <div class="stepper-step active" data-step="1">
+                <div class="stepper-circle">1</div>
+                <span class="stepper-label">Upload</span>
+            </div>
+            <div class="stepper-connector"></div>
+            <div class="stepper-step" data-step="2">
+                <div class="stepper-circle">2</div>
+                <span class="stepper-label">Review</span>
+            </div>
+            <div class="stepper-connector"></div>
+            <div class="stepper-step" data-step="3">
+                <div class="stepper-circle">3</div>
+                <span class="stepper-label">Schedule</span>
+            </div>
+        </div>
+
+        <!-- ═══ STEP 1: Upload ═══ -->
+        <div id="step-1-panel">
+            <div class="card fade-in-up">
+                <div style="margin-bottom:20px;">
+                    <h3 style="font-size:1.1rem;font-weight:700;">📄 Upload Syllabus or Course Outcomes</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Let AI analyze your syllabus
+                        and build a smart study plan</p>
+                </div>
+
+                <!-- Upload Zone -->
+                <div class="syllabus-drop-zone" id="syllabus-drop-zone">
+                    <span class="icon">📚</span>
+                    <div class="title">Drop your syllabus here</div>
+                    <div class="sub">Supports PDF, DOC, DOCX, TXT, or paste text below</div>
+                </div>
+                <input type="file" id="syllabus-file-input" accept=".pdf,.doc,.docx,.txt,image/*" style="display:none;">
+                <div class="file-indicator" id="file-indicator"></div>
+
+                <!-- OR Divider -->
+                <div class="or-divider">
+                    <hr><span>or</span>
+                    <hr>
+                </div>
+
+                <!-- Text Paste Area -->
+                <textarea id="syllabus-text" placeholder="Paste your syllabus, course outline, or list of topics here...
+
+Example:
+Unit 1: Introduction to Algorithms (Week 1-2)
+  - Big O Notation
+  - Sorting algorithms: Bubble, Merge, Quick
+Unit 2: Data Structures (Week 3-4)
+  - Arrays, Linked Lists
+  - Trees and Graphs
+Exam: December 15th"></textarea>
+
+                <!-- Analyze Button -->
+                <button class="btn btn-primary btn-full btn-lg" id="analyze-btn" style="margin-top:20px;">
+                    🧠 Analyze with AI
+                </button>
+            </div>
+        </div>
+
+        <!-- ═══ STEP 2: Review ═══ -->
+        <div id="step-2-panel" style="display:none;">
+            <div id="analysis-content"></div>
+        </div>
+
+        <!-- ═══ STEP 3: Schedule ═══ -->
+        <div id="step-3-panel" style="display:none;">
+            <!-- Smart Warnings -->
+            <div id="smart-warnings" class="mb-md"></div>
+
+            <div class="grid-2">
+                <!-- Left: Schedule Views -->
+                <div class="card fade-in-up">
+                    <div class="card-header">
+                        <h3 class="card-title">📋 Your Study Schedule</h3>
+                    </div>
+
+                    <!-- Tab Switcher -->
+                    <div class="tab-switcher">
+                        <button class="tab-btn schedule-tab active" data-view="weekly">📅 Weekly View</button>
+                        <button class="tab-btn schedule-tab" data-view="daily">📆 Daily View</button>
+                    </div>
+
+                    <div id="weekly-view"></div>
+                    <div id="daily-view" style="display:none;"></div>
+
+                    <div class="flex-between mt-md" style="flex-wrap:wrap;gap:12px;">
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-secondary btn-sm" id="recalculate-btn">🔄 Recalculate</button>
+                            <button class="btn btn-secondary btn-sm" id="reupload-btn">📄 Re-upload Syllabus</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Topic Tracker -->
+                <div class="card fade-in-up">
+                    <div class="card-header">
+                        <h3 class="card-title">📊 Topic Completion Tracker</h3>
+                    </div>
+                    <div id="topic-tracker"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Tab Bar (Mobile) -->
+    <nav class="bottom-tab-bar">
+        <a href="dashboard.html" class="tab-item"><span class="tab-icon">🏠</span>Home</a>
+        <a href="planner.html" class="tab-item active"><span class="tab-icon">📅</span>Planner</a>
+        <a href="tasks.html" class="tab-item"><span class="tab-icon">✅</span>Tasks</a>
+        <a href="analytics.html" class="tab-item"><span class="tab-icon">📊</span>Analytics</a>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="js/confetti.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/gamification.js"></script>
+    <script src="js/planner.js"></script>
+    <script src="js/timer-widget.js"></script>
+</body>
+
+</html>

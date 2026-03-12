@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudyQuest — AI Powered Gamified Study Planner. Study smarter, level up faster with intelligent scheduling and gamification.">
+    <title>StudyQuest — AI Powered Gamified Study Planner</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <style>
+        /* ── Landing Page Specific Styles ── */
+        .landing-body {
+            background: var(--bg-primary);
+            overflow-x: hidden;
+        }
+
+        /* Navigation Bar */
+        .landing-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .landing-logo {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            padding: 100px 24px 60px;
+        }
+
+        .hero-content {
+            max-width: 700px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-blue) 50%, var(--accent-purple) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite, slideUp 0.7s ease forwards;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 36px;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-cta {
+            padding: 18px 40px;
+            font-size: 1.05rem;
+        }
+
+        /* Floating Background Shapes */
+        .hero-shapes {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 20px;
+            opacity: 0.08;
+        }
+
+        .shape-1 {
+            width: 300px; height: 300px;
+            background: var(--accent-blue);
+            top: 10%; left: 5%;
+            animation: float1 20s infinite ease-in-out;
+        }
+
+        .shape-2 {
+            width: 200px; height: 200px;
+            background: var(--accent-purple);
+            top: 20%; right: 10%;
+            border-radius: 50%;
+            animation: float2 25s infinite ease-in-out;
+        }
+
+        .shape-3 {
+            width: 250px; height: 250px;
+            background: var(--accent-green);
+            bottom: 15%; left: 15%;
+            animation: float3 18s infinite ease-in-out;
+        }
+
+        .shape-4 {
+            width: 180px; height: 180px;
+            background: var(--accent-yellow);
+            bottom: 20%; right: 15%;
+            border-radius: 50%;
+            animation: float1 22s infinite ease-in-out;
+        }
+
+        .shape-5 {
+            width: 120px; height: 120px;
+            background: var(--accent-pink);
+            top: 40%; left: 50%;
+            transform: translateX(-50%);
+            animation: float2 15s infinite ease-in-out;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 48px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .features-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .features-sub {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 48px;
+            font-size: 1rem;
+        }
+
+        .feature-card {
+            padding: 36px 28px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2.8rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 80px 48px;
+            background: var(--bg-card);
+        }
+
+        .how-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 48px;
+        }
+
+        .steps-row {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .step-item {
+            text-align: center;
+            flex: 1;
+            max-width: 260px;
+        }
+
+        .step-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin: 0 auto 16px;
+            color: #fff;
+        }
+
+        .step-1 .step-number { background: linear-gradient(135deg, var(--accent-blue), #3B7DEB); }
+        .step-2 .step-number { background: linear-gradient(135deg, var(--accent-green), #2EB87A); }
+        .step-3 .step-number { background: linear-gradient(135deg, var(--accent-purple), #7C3AED); }
+
+        .step-item h3 {
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+
+        .step-item p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        /* Connector lines between steps */
+        .step-connector {
+            width: 60px;
+            border-top: 2px dashed var(--border);
+            align-self: flex-start;
+            margin-top: 28px;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            padding: 60px 48px;
+            display: flex;
+            justify-content: center;
+            gap: 64px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--accent-blue);
+        }
+
+        .stat-desc {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* Footer */
+        .landing-footer {
+            text-align: center;
+            padding: 40px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .landing-nav { padding: 0 20px; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero-subtitle { font-size: 1rem; }
+            .features { padding: 48px 20px; }
+            .how-it-works { padding: 48px 20px; }
+            .steps-row { flex-direction: column; align-items: center; gap: 32px; }
+            .step-connector { display: none; }
+            .stats-bar { flex-direction: column; gap: 32px; padding: 48px 20px; }
+        }
+    </style>
+</head>
+<body class="landing-body">
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <div class="landing-logo">📚 StudyQuest</div>
+        <a href="dashboard.html" class="btn btn-primary btn-sm">Open App →</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+            <div class="shape shape-5"></div>
+        </div>
+        <div class="hero-content">
+            <h1 class="slide-up">Study Smarter.<br>Level Up Faster.</h1>
+            <p class="hero-subtitle slide-up slide-up-delay-1">
+                Your AI-powered study companion that turns learning into an adventure.
+                Smart scheduling, gamified progress, and powerful analytics — all in one place.
+            </p>
+            <a href="dashboard.html" class="btn btn-primary btn-lg hero-cta pulse-glow slide-up slide-up-delay-2">
+                Start Your Journey →
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <h2 class="features-title">Why StudyQuest?</h2>
+        <p class="features-sub">Everything you need to ace your studies, beautifully designed.</p>
+        <div class="grid-3">
+            <div class="card feature-card fade-in-up">
+                <span class="feature-icon">🤖</span>
+                <h3>AI Study Planner</h3>
+                <p>Intelligent schedule generation based on exam dates, difficulty levels, and your available time. Never miss a study session.</p>
+            </div>
+            <div class="card feature-card fade-in-up">
+                <span class="feature-icon">🎮</span>
+                <h3>Gamification</h3>
+                <p>Earn XP, level up, unlock badges, and maintain streaks. Learning feels like playing your favorite game.</p>
+            </div>
+            <div class="card feature-card fade-in-up">
+                <span class="feature-icon">📊</span>
+                <h3>Smart Analytics</h3>
+                <p>Track your study hours, task completion, and streak trends with beautiful charts. Know exactly where you stand.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <h2 class="how-title">How It Works</h2>
+        <div class="steps-row">
+            <div class="step-item step-1 fade-in-up">
+                <div class="step-number">1</div>
+                <h3>Add Your Subjects</h3>
+                <p>Enter your subjects, exam dates, and difficulty levels. We'll handle the rest.</p>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item step-2 fade-in-up">
+                <div class="step-number">2</div>
+                <h3>Get Your Schedule</h3>
+                <p>Our AI generates optimized study plans that adapt to your goals and availability.</p>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item step-3 fade-in-up">
+                <div class="step-number">3</div>
+                <h3>Level Up!</h3>
+                <p>Complete tasks, earn XP, unlock badges, and watch your progress soar on the analytics dashboard.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="stat-item fade-in-up">
+            <div class="stat-number" data-target="500">0</div>
+            <div class="stat-desc">Students Using StudyQuest</div>
+        </div>
+        <div class="stat-item fade-in-up">
+            <div class="stat-number" data-target="10000">0</div>
+            <div class="stat-desc">Tasks Completed</div>
+        </div>
+        <div class="stat-item fade-in-up">
+            <div class="stat-number" data-target="95">0</div>
+            <div class="stat-desc">% Consistency Rate</div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <p>Built with ❤️ by StudyQuest Team · © 2026 StudyQuest</p>
+    </footer>
+
+    <script>
+        /**
+         * Landing page scripts:
+         * - Animated count-up on scroll (IntersectionObserver)
+         * - Staggered card animations triggered on visibility
+         */
+
+        // Count-up animation for stats numbers
+        const animateCountUp = (el, target) => {
+            const suffix = el.parentElement.querySelector('.stat-desc')?.textContent.includes('%') ? '%' : '+';
+            const duration = 2000;
+            const start = performance.now();
+
+            const update = (now) => {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease-out curve for smooth deceleration
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(eased * target);
+                el.textContent = current.toLocaleString() + (progress >= 1 ? suffix : '');
+                if (progress < 1) requestAnimationFrame(update);
+            };
+
+            requestAnimationFrame(update);
+        };
+
+        // Observe stats section for scroll-triggered animation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const nums = entry.target.querySelectorAll('.stat-number[data-target]');
+                    nums.forEach(el => {
+                        const target = parseInt(el.dataset.target);
+                        animateCountUp(el, target);
+                    });
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        const statsBar = document.querySelector('.stats-bar');
+        if (statsBar) observer.observe(statsBar);
+
+        // Trigger fade-in-up animations when elements become visible
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            fadeObserver.observe(el);
+        });
+    </script>
+</body>
+</html>
