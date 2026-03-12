@@ -77,6 +77,37 @@ Our notification engine has **4 escalating severity tiers** with 30+ unique mess
 
 Even the **dismiss button** guilt-trips you: *"Your textbook just shed a tear. 📖💧"*
 
+#### 5 Demo Notifications for Judges
+
+> **1. 🟢 Gentle (1hr away)**
+> 📚 *Hey there!* — Your books aren't going to read themselves... just saying.
+
+> **2. 🟡 Moderate (4hr away)**
+> 📚 *We noticed...* — Looks like you've forgotten about your study sessions. Again.
+
+> **3. 🔴 Aggressive (12hr away)**
+> 😤 *Plan4U is disappointed* — You've let Plan4U down. Who will be next? Your professor? Your GPA?
+
+> **4. 💀 Nuclear (24hr+ away)**
+> 🚨 *This is an intervention* — Your friends, your family, your GPA — we're all here because we care. Open Plan4U.
+
+> **5. 🎭 Comeback Splash (returning after 2 days)**
+> 😤 **Finally!** — *Do you know how long I've been sending you notifications? Your books almost filed a missing person report.*
+> Stats shown: `48h Away · 0 Streak · 5 Pending`
+> CTA: `I'm Back! Forgive Me 😅`
+> Dismiss toast: *"That's 3 times you've dismissed me. I'm counting."*
+
+**Live demo command** — Paste in browser console to trigger nuclear comeback splash:
+```js
+localStorage.setItem('plan4u_last_visit', (Date.now() - 48*60*60*1000).toString());
+localStorage.removeItem('plan4u_comeback_shown_date');
+location.reload();
+```
+
+**Screenshot — Nuclear Comeback Splash:**
+
+![Nuclear comeback splash notification showing "Back from the dead?" with tombstone emoji, guilt message, stats, and RESURRECT MY GRADES button](screenshots/notification_demo.png)
+
 ### 3. Proof-Based Task Verification
 Students can't just mark tasks "done" — they must:
 - Submit a **URL** (to an assignment, quiz, or resource) → +100 XP
