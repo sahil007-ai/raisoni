@@ -289,6 +289,8 @@ Open the project in VS Code and use the Live Server extension.
 
 ## Notification System
 
+![Notification Example](assets/notification.png)
+
 Plan4U features a Duolingo-inspired guilt-trip notification system that escalates based on how long the user has been away.
 
 ### Browser Push Notifications
